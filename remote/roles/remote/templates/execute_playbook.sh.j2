@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -uo pipefail 
+
+# Usage: [filename]
+read_file () {
+    if [ $# -lt 2 ]; then
+        printf "read_file: invalid usage error: $# args given (2 required)\n"
+        return 1
+    fi
+	awk -F'=' -v target="$2" '$1 == target { print $2 }' "$1"
+}
+
+write_file () {
+    if [ $# -lt 3 ]; then
+        printf "write_file: invalid usage error: $# args given (3 required)\n"
+        return 1
+    fi
+	sed -i "s|${2}=.*|${2}=${3}|g" "$1"
+}
+
+execute_playbook () {
+	local to_run
+
+	to_run="$(read_file {{ remote_config_path }} "need_to_execute_playbook")"
+	printf "Checking {{ remote_config_path }} to see if playbook needs to be run... \["$(date)"\]\n"
+
+	if [ to_run = "true" ]; then	
+		printf "Executing playbook! ["$(date)"]\n" 
+		ansible-playbook {{ remote_playbook_dest }}/site.yml --tags "standard"
+	else
+		printf "No run request detected. Skipping.\n"
+	fi
+}
+
+main () {
+	execute_playbook
+}
+
+main |& tee -a {{ remote_execute_logs_path }}
+

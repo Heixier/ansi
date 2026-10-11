@@ -1,0 +1,30 @@
+---
+# Test role for testing tasks
+
+- name: Ensure destination exists
+  ansible.builtin.file:
+    state: directory
+    path: "{{ remote_ansible_dir }}"
+    mode: "0755"
+
+- name: Ensure sync script presence
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/{{ remote_sync_script_name }}.j2"
+    dest: "{{ remote_sync_script_dest }}"
+    mode: "0755"
+
+- name: Ensure sync is scheduled in crontab
+  ansible.builtin.cron:
+    name: "Ansible pull"
+    job: "bash {{ remote_sync_script_dest }}"
+
+- name: Ensure playbook script is present
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/{{ remote_playbook_script_name }}.j2"
+    dest: "{{ remote_playbook_script_dest }}"
+    mode: "0755"
+
+# Always put this at the end !!
+- name: Confirm role completion
+  ansible.builtin.set_fact:
+    setup_roles: "{{ setup_roles + [ansible_role_name] }}" # noqa: var-naming[no-role-prefix]

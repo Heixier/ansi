@@ -1,0 +1,17 @@
+---
+- name: Investigate root storage space
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      df -h / | awk 'NR==2 { printf("%s/%s (%s)", $3, $2, $5) }'
+    executable: /bin/bash
+  changed_when: false
+  register: storage_recorded
+
+- name: Save result
+  ansible.builtin.set_fact:
+    storage_used: "{{ storage_recorded.stdout }}"
+
+- name: Confirm role completion
+  ansible.builtin.set_fact:
+    setup_roles: "{{ setup_roles + [ansible_role_name] }}" # noqa: var-naming[no-role-prefix]

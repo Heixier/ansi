@@ -1,0 +1,6 @@
+Run summary:
+Version: {{ playbook_version }}
+User: {{ all_useracc }}
+Date: {{ ansible_facts['date_time']['iso8601'] }}
+Provided Tags: {{ ansible_run_tags | join(', ') }}
+Executed Roles: {{ setup_roles | join(', ') }}

@@ -1,0 +1,82 @@
+#!/bin/bash
+
+set -uo pipefail
+
+PLAYBOOK_DEST="{{ remote_playbook_dest }}"
+URL="{{ remote_playbook_host }}"
+
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 || exit 1; pwd -P)"
+SCRIPT_NAME=$(basename "${BASH_SOURCE[0]}")
+LOCKFILE="{{ remote_sync_lockfile }}"
+
+LOGS_PATH="{{ remote_sync_logs_path }}"
+
+cleanup () {
+    trap - SIGINT SIGTERM ERR EXIT
+
+    # close the file descriptor if it exists
+    [[ -n "${fd:-}" ]] && exec {fd}>&-
+
+    if [[ -f "$LOCKFILE" && $(<"$LOCKFILE") -eq $$ ]]; then
+        rm -f "$LOCKFILE"
+    fi
+}
+
+trap cleanup SIGINT SIGTERM ERR EXIT
+
+lock () {
+	exec {fd}>> "$LOCKFILE"
+
+	if ! flock -n "$fd"; then
+		printf "%s is already running at PID: %s\n" "${SCRIPT_NAME}" "$(<"$LOCKFILE")"
+		exit 1
+	else
+		printf "%s\n" "$$" > "$LOCKFILE" # Write PID to lockfile for identification
+	fi
+}
+
+# Usage: [filename]
+read_file () {
+    if [ $# -lt 2 ]; then
+        printf "read_file: invalid usage error: %s args given (2 required)\n" "$#"
+        return 1
+    fi
+	awk -F'=' -v target="$2" '$1 == target { print $2 }' "$1"
+}
+
+# Usage: [filename, variable, new_value]
+write_file () {
+    if [ $# -lt 3 ]; then
+        printf "write_file: invalid usage error: %s args given (3 required)\n" "$#"
+        return 1
+    fi
+	sed -i "s/$2=.*/$2=$3/g" "$1"
+}
+
+sync () {
+	wget -nH --reject "index.html*" --cut-dirs=3 --mirror --no-parent -P "${PLAYBOOK_DEST}" "${URL}"
+}
+
+main () {
+	if sync |& tee "$LOGS_PATH"; then
+		printf "\nSyncing complete\n" |& tee -a "$LOGS_PATH"
+	else
+		printf "\nSyncing failed!\n" |& tee -a "$LOGS_PATH"
+		return 1
+	fi
+	
+	# Check if any non-index file was saved, then toggle the flag
+	# DO NOT USE THE WORD "save" in the output message or awk will match it
+
+	printf "Checking %s for any new files\n" "$LOGS_PATH" |& tee -a "$LOGS_PATH"
+	if ! awk '/save/ && !/index.html/ { print $0; exit 1}' "$LOGS_PATH" |& tee -a "$LOGS_PATH"; then
+		printf "New files found!\n" |& tee -a "$LOGS_PATH"
+		write_file "{{ remote_config_path }}" "need_to_execute_playbook" "true"
+	else
+		printf "No files to download!\n" |& tee -a "$LOGS_PATH"
+	fi
+}
+
+lock && main "$@"
+
+# Have this trigger execute_playbook instead of two conflicting cronjobs.

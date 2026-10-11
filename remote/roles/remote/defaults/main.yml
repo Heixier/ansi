@@ -1,0 +1,17 @@
+---
+remote_playbook_host: "https://rzsiah.com/ansible/{{ all_playbook_name }}/"
+
+remote_ansible_dir: "/opt/ansible"
+remote_sync_script_name: "remote_sync.sh"
+remote_sync_script_dest: "{{ remote_ansible_dir }}/{{ remote_sync_script_name }}"
+remote_playbook_dest: "{{ remote_ansible_dir }}/{{ all_playbook_name }}"
+
+remote_playbook_script_name: "execute_playbook.sh"
+remote_playbook_script_dest: "{{ remote_ansible_dir }}/{{ remote_playbook_script_name }}"
+
+remote_config_path: "{{ role_path }}/files/remote_sync.conf"
+remote_sync_logs_path: "{{ all_logs_path }}/{{ all_playbook_name }}_sync.log"
+remote_execute_logs_path: "{{ all_logs_path }}/{{ all_playbook_name }}_execute.log"
+
+remote_sync_lockfile: "/run/lock/{{ all_playbook_name }}_sync.lock"
+remote_execute_lockfile: "/run/lock/{{ all_playbook_name }}_execute.lock"

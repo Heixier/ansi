@@ -1,0 +1,19 @@
+---
+- name: Ensure logs path presence
+  ansible.builtin.file:
+    path: "{{ logs_path }}"
+    state: directory
+    mode: "0644"
+    owner: "{{ setup_user }}"
+    recurse: true
+
+- name: Ensure logrotate presence
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/{{ playbook_name }}.j2"
+    dest: "/etc/logrotate.d/{{ playbook_name }}"
+    mode: "0644"
+
+# Always put this at the end !!
+- name: Confirm role completion
+  ansible.builtin.set_fact:
+    setup_roles: "{{ setup_roles + [ansible_role_name] }}" # noqa: var-naming[no-role-prefix]

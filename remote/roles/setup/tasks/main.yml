@@ -1,0 +1,5 @@
+---
+# Always put this at the end !!
+- name: Confirm role completion
+  ansible.builtin.set_fact:
+    setup_roles: "{{ setup_roles + [ansible_role_name] }}" # noqa: var-naming[no-role-prefix]

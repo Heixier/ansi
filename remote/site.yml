@@ -1,0 +1,26 @@
+---
+- name: Execute playbook according to given tags
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  roles:
+    - name: setup
+      role: setup
+      tags: ["always"]
+
+    - name: logs
+      role: logs
+      tags: ["logs", "standard"]
+
+    - name: space
+      role: space
+      tags: ["space", "standard"]
+
+    - name: remote
+      role: remote
+      tags: ["remote", "standard"]
+
+    - name: version
+      role: version
+      tags: ["always"]

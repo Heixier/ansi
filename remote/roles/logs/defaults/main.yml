@@ -1,0 +1,4 @@
+---
+logs_path: "/var/log/ansi/remote"
+logs_rotate_target: "*.log"
+logs_rotate_duration: "14d"

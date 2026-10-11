@@ -1,0 +1,19 @@
+---
+- name: Ensure logs path exists
+  ansible.builtin.file:
+    path: "{{ logs_path }}"
+    state: directory
+    mode: "644"
+  register: summary_path_check
+  ignore_errors: true
+
+- name: Confirm role completion
+  ansible.builtin.set_fact:
+    setup_roles: "{{ setup_roles + [ansible_role_name] }}" # noqa: var-naming[no-role-prefix]
+
+- name: Create log
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/{{ role_name }}.j2"
+    dest: "{{ logs_path }}/{{ playbook_name }}.log"
+    mode: "0644"
+  when: summary_path_check is succeeded

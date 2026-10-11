@@ -1,0 +1,11 @@
+{{ logs_path }}/{{ logs_rotate_target }} {
+	create 644 {{ setup_user }} {{ setup_user }}
+    daily
+    rotate 7
+    missingok
+    maxage 7
+    dateext
+    dateformat -%Y-%m-%d
+    dateyesterday
+    addextension .rotated
+}
